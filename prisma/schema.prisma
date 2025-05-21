@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Tracker {
+  id           Int            @id @default(autoincrement())
+  trackerName  String
+  targetHours  Int
+  archived     Boolean        @default(false)
+  description  String         @default("")
+  sessions     Session[]
+  activeSession ActiveSession?
+}
+
+model Session {
+  id              Int      @id @default(autoincrement())
+  trackerId       Int
+  startTime       DateTime
+  endTime         DateTime
+  durationMinutes Int
+  tracker         Tracker  @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+}
+
+model ActiveSession {
+  trackerId  Int      @id
+  startTime  DateTime
+  tracker    Tracker  @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+}
