@@ -236,8 +236,8 @@ export default {
       }
 
       const result = {
-        work_debt: parseFloat(workDebt.toFixed(2)),
-        work_advance: parseFloat(workAdvance.toFixed(2)),
+        workDebt: parseFloat(workDebt.toFixed(2)),
+        workAdvance: parseFloat(workAdvance.toFixed(2)),
       };
 
       return { success: true, data: result };
