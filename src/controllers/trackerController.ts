@@ -6,9 +6,9 @@ const trackerController = {
   // Add a new tracker
   async addTracker(req: Request, res: Response) {
     try {
-      const { tracker_name, target_hours, description } = req.body;
+      const { trackerName, targetHours, description } = req.body;
 
-      if (!tracker_name || !target_hours) {
+      if (!trackerName || !targetHours) {
         res.status(400).json({
           success: false,
           error: 'Tracker name and target hours are required'
@@ -17,8 +17,8 @@ const trackerController = {
       }
 
       const result = await trackerService.addTracker({
-        trackerName: tracker_name,
-        targetHours: parseInt(target_hours, 10),
+        trackerName,
+        targetHours: parseInt(targetHours, 10),
         description: description || ''
       });
 
