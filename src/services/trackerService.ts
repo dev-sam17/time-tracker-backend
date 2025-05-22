@@ -196,6 +196,7 @@ export default {
       // Get all sessions for this tracker
       const sessions = await prisma.session.findMany({
         where: { trackerId },
+        orderBy: { startTime: 'asc' },
       });
 
       // Helper function to get date string
@@ -203,25 +204,39 @@ export default {
         return date.toISOString().split('T')[0];
       };
 
-      // Calculate daily totals
+      // Calculate daily totals from sessions
       const dailyTotals: Record<string, number> = {};
       for (const session of sessions) {
         const date = getDateStr(session.startTime);
         dailyTotals[date] = (dailyTotals[date] || 0) + session.durationMinutes;
       }
 
+      // Get work days configuration
+      const workDays = new Set(tracker.workDays.split(',').map(Number));
+
+      // Calculate all work days from first session to today
       let totalWorkDays = 0;
       let totalWorkHours = 0;
+      
+      if (sessions.length > 0) {
+        const firstSessionDate = new Date(sessions[0].startTime);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-      for (const [date, minutes] of Object.entries(dailyTotals)) {
-        const hours = minutes / 60;
-        const day = new Date(date).getDay();
+        let currentDate = new Date(firstSessionDate);
+        currentDate.setHours(0, 0, 0, 0);
 
-        if (day === 0 || day === 6) {
-          totalWorkHours += hours;
-        } else {
-          totalWorkDays += 1;
-          totalWorkHours += hours;
+        while (currentDate <= today) {
+          const dateStr = getDateStr(currentDate);
+          const dayOfWeek = currentDate.getDay();
+
+          if (workDays.has(dayOfWeek)) {
+            totalWorkDays++;
+            const minutesWorked = dailyTotals[dateStr] || 0;
+            totalWorkHours += minutesWorked / 60;
+          }
+
+          currentDate.setDate(currentDate.getDate() + 1);
         }
       }
 
@@ -238,6 +253,9 @@ export default {
       const result = {
         workDebt: parseFloat(workDebt.toFixed(2)),
         workAdvance: parseFloat(workAdvance.toFixed(2)),
+        totalWorkDays,
+        totalWorkHours: parseFloat(totalWorkHours.toFixed(2)),
+        targetWorkHours: parseFloat(targetWorkHours.toFixed(2)),
       };
 
       return { success: true, data: result };
