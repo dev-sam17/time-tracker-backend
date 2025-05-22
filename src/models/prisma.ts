@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../prisma/generated/client';
 import logger from '../utils/logger';
 
 // Create a singleton instance of PrismaClient
