@@ -32,9 +32,10 @@ export default {
   // Start tracking time for a tracker
   async startTracker(trackerId: number) {
     try {
-      // Check if tracker exists
-      const tracker = await prisma.tracker.findUnique({
+      // Check if tracker exists and update its updatedAt timestamp
+      const tracker = await prisma.tracker.update({
         where: { id: trackerId },
+        data: { updatedAt: new Date() }
       });
       
       if (!tracker) {
@@ -80,20 +81,24 @@ export default {
         (endTime.getTime() - activeSession.startTime.getTime()) / 60000
       );
 
-      // Create a completed session
-      await prisma.session.create({
-        data: {
-          trackerId,
-          startTime: activeSession.startTime,
-          endTime,
-          durationMinutes,
-        },
-      });
-
-      // Delete the active session
-      await prisma.activeSession.delete({
-        where: { trackerId },
-      });
+      // Update tracker's updatedAt timestamp and create session in a transaction
+      await prisma.$transaction([
+        prisma.tracker.update({
+          where: { id: trackerId },
+          data: { updatedAt: endTime }
+        }),
+        prisma.session.create({
+          data: {
+            trackerId,
+            startTime: activeSession.startTime,
+            endTime,
+            durationMinutes,
+          },
+        }),
+        prisma.activeSession.delete({
+          where: { trackerId },
+        })
+      ]);
 
       return { success: true, message: 'Tracker stopped and session recorded.' };
     } catch (err) {
@@ -145,7 +150,11 @@ export default {
   // Get all trackers
   async getAllTrackers() {
     try {
-      const trackers = await prisma.tracker.findMany();
+      const trackers = await prisma.tracker.findMany({
+        orderBy: {
+          updatedAt: 'desc'
+        }
+      });
       return { success: true, data: trackers };
     } catch (err) {
       logger.error(`Error getting trackers: ${(err as Error).message}`);
