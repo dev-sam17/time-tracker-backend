@@ -6,6 +6,7 @@ interface TrackerInput {
   trackerName: string;
   targetHours: number;
   description: string;
+  workDays?: string;  // Optional, will use default from schema if not provided
 }
 
 // Tracker Service
@@ -18,6 +19,7 @@ export default {
           trackerName: data.trackerName,
           targetHours: data.targetHours,
           description: data.description,
+          workDays: data.workDays || "1,2,3,4,5",  // Use default if not provided
         },
       });
       
