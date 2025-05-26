@@ -7,29 +7,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3210:3210"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=mysql://root:password@mysql:3306/time_tracker_dev
     volumes:
       - ./src:/app/src
       - ./prisma:/app/prisma
-    depends_on:
-      - mysql
     command: >
       sh -c "pnpm prisma migrate deploy && pnpm dev"
     restart: unless-stopped
-
-  mysql:
-    image: mysql:8.0
-    ports:
-      - "3306:3306"
-    environment:
-      - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=time_tracker_dev
-    volumes:
-      - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
-    restart: unless-stopped
-
-volumes:
-  mysql_data:
