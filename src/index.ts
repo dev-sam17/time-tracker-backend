@@ -2,7 +2,6 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import morgan from 'morgan';
-import { PrismaClient } from '@prisma/client';
 import trackerRoutes from './routes/trackerRoutes';
 import config from './config/env';
 import logger from './utils/logger';
