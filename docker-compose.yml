@@ -13,5 +13,5 @@ services:
       - ./src:/app/src
       - ./prisma:/app/prisma
     command: >
-      sh -c "pnpm dev"
+      sh -c "pnpm start"
     restart: unless-stopped
