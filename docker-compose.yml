@@ -9,9 +9,4 @@ services:
       - .env.production
     ports:
       - "3210:3210"
-    volumes:
-      - ./src:/app/src
-      - ./prisma:/app/prisma
-    command: >
-      sh -c "pnpm start"
-    restart: unless-stopped
+    restart: always
