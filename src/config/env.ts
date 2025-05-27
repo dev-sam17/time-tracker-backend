@@ -7,7 +7,7 @@ const envFile = `.env.${environment}`;
 dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 
 // Fall back to .env if specific environment file doesn't exist
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+// dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 export default {
   // Server configuration
