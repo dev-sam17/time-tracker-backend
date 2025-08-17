@@ -1,12 +1,12 @@
-import prisma from '../models/prisma';
-import logger from '../utils/logger';
+import prisma from "../models/prisma";
+import logger from "../utils/logger";
 
 // Define types
 interface TrackerInput {
   trackerName: string;
   targetHours: number;
   description: string;
-  workDays?: string;  // Optional, will use default from schema if not provided
+  workDays?: string; // Optional, will use default from schema if not provided
 }
 
 // Tracker Service
@@ -19,12 +19,17 @@ export default {
           trackerName: data.trackerName,
           targetHours: data.targetHours,
           description: data.description,
-          workDays: data.workDays || "1,2,3,4,5",  // Use default if not provided
+          workDays: data.workDays || "1,2,3,4,5", // Use default if not provided
+          user: {
+            connect: {
+              id: 1,
+            },
+          },
         },
       });
-      
+
       logger.info(`Added tracker with ID: ${tracker.id}`);
-      return { success: true, message: 'Tracker added.', data: tracker };
+      return { success: true, message: "Tracker added.", data: tracker };
     } catch (err) {
       logger.error(`Error adding tracker: ${(err as Error).message}`);
       return { success: false, error: (err as Error).message };
@@ -37,11 +42,11 @@ export default {
       // Check if tracker exists and update its updatedAt timestamp
       const tracker = await prisma.tracker.update({
         where: { id: trackerId },
-        data: { updatedAt: new Date() }
+        data: { updatedAt: new Date() },
       });
-      
+
       if (!tracker) {
-        return { success: false, error: 'Tracker not found.' };
+        return { success: false, error: "Tracker not found." };
       }
 
       // Check if there's already an active session
@@ -58,8 +63,8 @@ export default {
           },
         });
       }
-      
-      return { success: true, message: 'Tracker started.' };
+
+      return { success: true, message: "Tracker started." };
     } catch (err) {
       logger.error(`Error starting tracker: ${(err as Error).message}`);
       return { success: false, error: (err as Error).message };
@@ -75,7 +80,7 @@ export default {
       });
 
       if (!activeSession) {
-        return { success: false, error: 'No active session found.' };
+        return { success: false, error: "No active session found." };
       }
 
       const endTime = new Date();
@@ -87,7 +92,7 @@ export default {
       await prisma.$transaction([
         prisma.tracker.update({
           where: { id: trackerId },
-          data: { updatedAt: endTime }
+          data: { updatedAt: endTime },
         }),
         prisma.session.create({
           data: {
@@ -99,10 +104,13 @@ export default {
         }),
         prisma.activeSession.delete({
           where: { trackerId },
-        })
+        }),
       ]);
 
-      return { success: true, message: 'Tracker stopped and session recorded.' };
+      return {
+        success: true,
+        message: "Tracker stopped and session recorded.",
+      };
     } catch (err) {
       logger.error(`Error stopping tracker: ${(err as Error).message}`);
       return { success: false, error: (err as Error).message };
@@ -116,8 +124,8 @@ export default {
         where: { id: trackerId },
         data: { archived: true },
       });
-      
-      return { success: true, message: 'Tracker archived.' };
+
+      return { success: true, message: "Tracker archived." };
     } catch (err) {
       logger.error(`Error archiving tracker: ${(err as Error).message}`);
       return { success: false, error: (err as Error).message };
@@ -131,18 +139,18 @@ export default {
       await prisma.session.deleteMany({
         where: { trackerId },
       });
-      
+
       // Delete active session if exists
       await prisma.activeSession.deleteMany({
         where: { trackerId },
       });
-      
+
       // Delete the tracker
       await prisma.tracker.delete({
         where: { id: trackerId },
       });
-      
-      return { success: true, message: 'Tracker deleted.' };
+
+      return { success: true, message: "Tracker deleted." };
     } catch (err) {
       logger.error(`Error deleting tracker: ${(err as Error).message}`);
       return { success: false, error: (err as Error).message };
@@ -154,8 +162,8 @@ export default {
     try {
       const trackers = await prisma.tracker.findMany({
         orderBy: {
-          updatedAt: 'desc'
-        }
+          updatedAt: "desc",
+        },
       });
       return { success: true, data: trackers };
     } catch (err) {
@@ -201,18 +209,18 @@ export default {
       });
 
       if (!tracker) {
-        return { success: false, error: 'Tracker not found.' };
+        return { success: false, error: "Tracker not found." };
       }
 
       // Get all sessions for this tracker
       const sessions = await prisma.session.findMany({
         where: { trackerId },
-        orderBy: { startTime: 'asc' },
+        orderBy: { startTime: "asc" },
       });
 
       // Helper function to get date string
       const getDateStr = (date: Date) => {
-        return date.toISOString().split('T')[0];
+        return date.toISOString().split("T")[0];
       };
 
       // Calculate daily totals from sessions
@@ -223,12 +231,12 @@ export default {
       }
 
       // Get work days configuration
-      const workDays = new Set(tracker.workDays.split(',').map(Number));
+      const workDays = new Set(tracker.workDays.split(",").map(Number));
 
       // Calculate all work days from first session to today
       let totalWorkDays = 0;
       let totalWorkHours = 0;
-      
+
       if (sessions.length > 0) {
         const firstSessionDate = new Date(sessions[0].startTime);
         const today = new Date();

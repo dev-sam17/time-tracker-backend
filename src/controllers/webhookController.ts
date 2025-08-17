@@ -20,17 +20,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
     console.log("========================");
 
     // Send acknowledgment response
-    res.status(200).json({
-      message: "Webhook received successfully",
-      timestamp,
-      received: {
-        method,
-        url,
-        bodySize: JSON.stringify(body).length,
-        hasHeaders: Object.keys(headers).length > 0,
-        hasQuery: Object.keys(query).length > 0,
-      },
-    });
+    res.status(204).json({});
   } catch (error) {
     console.error("Error processing webhook:", error);
     res.status(500).json({
