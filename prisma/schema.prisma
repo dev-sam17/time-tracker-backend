@@ -11,10 +11,18 @@ datasource db {
 
 model User {
   id          Int       @id @default(autoincrement())
+  userId      String?   @unique // Supabase auth ID
   email       String    @unique
   username    String    @unique
   firstName   String?
   lastName    String?
+  fullName    String?
+  avatarUrl   String?
+  phone       String?
+  provider    String?   // google, email, etc.
+  providerId  String?   // provider-specific ID
+  emailVerified Boolean @default(false)
+  phoneVerified Boolean @default(false)
   isActive    Boolean   @default(true)
   trackers    Tracker[]
   createdAt   DateTime  @default(now())
