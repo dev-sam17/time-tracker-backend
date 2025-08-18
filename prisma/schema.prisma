@@ -10,7 +10,8 @@ datasource db {
 }
 
 model User {
-  id            String    @id @unique
+  id            String    @id @default(cuid())
+  userId        String    @unique
   email         String    @unique
   username      String    @unique
   firstName     String?
@@ -29,7 +30,7 @@ model User {
 }
 
 model Tracker {
-  id            Int            @id @default(autoincrement())
+  id            String         @id @default(cuid())
   userId        String
   trackerName   String
   targetHours   Int
@@ -38,14 +39,14 @@ model Tracker {
   workDays      String         @default("1,2,3,4,5") // Default Mon-Fri (0=Sun, 1=Mon, ..., 6=Sat)
   sessions      Session[]
   activeSession ActiveSession?
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [userId], onDelete: Cascade)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
 
 model Session {
-  id              Int      @id @default(autoincrement())
-  trackerId       Int
+  id              String   @id @default(cuid())
+  trackerId       String
   startTime       DateTime
   endTime         DateTime
   durationMinutes Int
@@ -53,7 +54,7 @@ model Session {
 }
 
 model ActiveSession {
-  trackerId Int      @id
+  trackerId String   @id
   startTime DateTime
   tracker   Tracker  @relation(fields: [trackerId], references: [id], onDelete: Cascade)
 }

@@ -38,7 +38,7 @@ export default {
   },
 
   // Start tracking time for a tracker
-  async startTracker(trackerId: number) {
+  async startTracker(trackerId: string) {
     try {
       // Check if tracker exists and update its updatedAt timestamp
       const tracker = await prisma.tracker.update({
@@ -73,7 +73,7 @@ export default {
   },
 
   // Stop tracking time for a tracker
-  async stopTracker(trackerId: number) {
+  async stopTracker(trackerId: string) {
     try {
       // Find the active session
       const activeSession = await prisma.activeSession.findUnique({
@@ -119,7 +119,7 @@ export default {
   },
 
   // Archive a tracker
-  async archiveTracker(trackerId: number) {
+  async archiveTracker(trackerId: string) {
     try {
       await prisma.tracker.update({
         where: { id: trackerId },
@@ -134,7 +134,7 @@ export default {
   },
 
   // Delete a tracker
-  async deleteTracker(trackerId: number) {
+  async deleteTracker(trackerId: string) {
     try {
       // Delete related sessions first (should be handled by cascade, but being explicit)
       await prisma.session.deleteMany({
@@ -190,7 +190,7 @@ export default {
   },
 
   // Get all sessions for a tracker
-  async getSessions(trackerId: number) {
+  async getSessions(trackerId: string) {
     try {
       const sessions = await prisma.session.findMany({
         where: { trackerId },
@@ -203,7 +203,7 @@ export default {
   },
 
   // Compute work stats by tracker ID
-  async computeWorkStatsByTrackerId(trackerId: number) {
+  async computeWorkStatsByTrackerId(trackerId: string) {
     try {
       // Get the tracker
       const tracker = await prisma.tracker.findUnique({

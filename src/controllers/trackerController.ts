@@ -71,7 +71,7 @@ const trackerController = {
         return;
       }
 
-      const result = await trackerService.stopTracker(parseInt(id, 10));
+      const result = await trackerService.stopTracker(id);
 
       if (result.success) {
         res.status(200).json(result);
@@ -98,7 +98,7 @@ const trackerController = {
         return;
       }
 
-      const result = await trackerService.archiveTracker(parseInt(id, 10));
+      const result = await trackerService.archiveTracker(id);
 
       if (result.success) {
         res.status(200).json(result);
@@ -125,7 +125,7 @@ const trackerController = {
         return;
       }
 
-      const result = await trackerService.deleteTracker(parseInt(id, 10));
+      const result = await trackerService.deleteTracker(id);
 
       if (result.success) {
         res.status(200).json(result);
@@ -195,7 +195,7 @@ const trackerController = {
         return;
       }
 
-      const result = await trackerService.getSessions(parseInt(id, 10));
+      const result = await trackerService.getSessions(id);
 
       if (result.success) {
         res.status(200).json(result);
@@ -222,7 +222,7 @@ const trackerController = {
         return;
       }
 
-      const result = await trackerService.computeWorkStatsByTrackerId(parseInt(id, 10));
+      const result = await trackerService.computeWorkStatsByTrackerId(id);
 
       if (result.success) {
         res.status(200).json(result);

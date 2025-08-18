@@ -55,7 +55,7 @@ const handleUserCreation = async (userData: any) => {
     // Create user in database with all available fields
     const newUser = await prisma.user.create({
       data: {
-        id,
+        userId: id,
         email,
         username,
         firstName: firstName || null,
@@ -72,7 +72,7 @@ const handleUserCreation = async (userData: any) => {
     });
 
     console.log(
-      `User created successfully: ID=${newUser.id}, Email=${newUser.email}, AuthID=${id}`
+      `User created successfully: ID=${newUser.id}, Email=${newUser.email}, AuthID=${newUser.userId}`
     );
     console.log("========================");
   } catch (error) {
@@ -89,7 +89,7 @@ const handleUserCreation = async (userData: any) => {
 
         const newUser = await prisma.user.create({
           data: {
-            id,
+            userId: id,
             email,
             username,
             firstName: firstName || null,
@@ -108,7 +108,7 @@ const handleUserCreation = async (userData: any) => {
         });
 
         console.log(
-          `User created with unique username: ID=${newUser.id}, Email=${newUser.email}`
+          `User created with unique username: ID=${newUser.id}, Email=${newUser.email}, AuthID=${newUser.userId}`
         );
       } catch (retryError) {
         console.error(
