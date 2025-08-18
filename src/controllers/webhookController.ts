@@ -3,12 +3,7 @@ import prisma from "../models/prisma";
 
 export const handleWebhook = async (req: Request, res: Response) => {
   try {
-    const timestamp = new Date().toISOString();
-    const method = req.method;
-    const url = req.originalUrl;
-    const headers = req.headers;
     const body = req.body;
-    const query = req.query;
 
     // Log the complete webhook payload
     console.log("=== WEBHOOK RECEIVED ===");
@@ -32,7 +27,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
 // Handle user creation from auth webhook
 const handleUserCreation = async (userData: any) => {
   try {
-    const { userId, email, phone, app_metadata, user_metadata } = userData;
+    const { authId, email, phone, app_metadata, user_metadata } = userData;
 
     // Extract user information
     const fullName = user_metadata?.full_name || user_metadata?.name || "";
@@ -41,14 +36,14 @@ const handleUserCreation = async (userData: any) => {
 
     // Generate username from email or use auth ID
     const username =
-      email?.split("@")[0] || userId?.substring(0, 8) || `user_${Date.now()}`;
+      email?.split("@")[0] || authId?.substring(0, 8) || `user_${Date.now()}`;
 
     console.log(`Creating user in database: ${email}`);
 
     // Check if user already exists by email or authId
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [{ email }, { userId }],
+        OR: [{ email }, { userId: authId }],
       },
     });
 
@@ -60,7 +55,7 @@ const handleUserCreation = async (userData: any) => {
     // Create user in database with all available fields
     const newUser = await prisma.user.create({
       data: {
-        userId,
+        userId: authId,
         email,
         username,
         firstName: firstName || null,
@@ -77,7 +72,7 @@ const handleUserCreation = async (userData: any) => {
     });
 
     console.log(
-      `User created successfully: ID=${newUser.id}, Email=${newUser.email}, AuthID=${userId}`
+      `User created successfully: ID=${newUser.id}, Email=${newUser.email}, AuthID=${authId}`
     );
     console.log("========================");
   } catch (error) {
@@ -86,7 +81,7 @@ const handleUserCreation = async (userData: any) => {
     // If username already exists, try with a suffix
     if (error.code === "P2002" && error.meta?.target?.includes("username")) {
       try {
-        const { userId, email, phone, app_metadata, user_metadata } = userData;
+        const { authId, email, phone, app_metadata, user_metadata } = userData;
         const fullName = user_metadata?.full_name || user_metadata?.name || "";
         const [firstName, ...lastNameParts] = fullName.split(" ");
         const lastName = lastNameParts.join(" ") || null;
@@ -94,7 +89,7 @@ const handleUserCreation = async (userData: any) => {
 
         const newUser = await prisma.user.create({
           data: {
-            userId,
+            userId: authId,
             email,
             username,
             firstName: firstName || null,
