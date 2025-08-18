@@ -17,7 +17,7 @@ const trackerController = {
       }
 
       const result = await trackerService.addTracker({
-        userId: parseInt(userId, 10),
+        userId: userId,
         trackerName,
         targetHours: parseInt(targetHours, 10),
         description: description || '',
@@ -39,17 +39,12 @@ const trackerController = {
   // Start a tracker
   async startTracker(req: Request, res: Response) {
     try {
-      const { id } = req.params;
-
-      if (!id) {
-        res.status(400).json({
-          success: false,
-          error: 'Tracker ID is required'
-        });
+      const { trackerId } = req.body;
+      if (!trackerId) {
+        res.status(400).json({ error: 'Tracker ID is required' });
         return;
       }
-
-      const result = await trackerService.startTracker(parseInt(id, 10));
+      const result = await trackerService.startTracker(trackerId);
 
       if (result.success) {
         res.status(200).json(result);
@@ -147,7 +142,16 @@ const trackerController = {
   // Get all trackers
   async getAllTrackers(req: Request, res: Response) {
     try {
-      const result = await trackerService.getAllTrackers();
+      const { userId } = req.query;
+      if (!userId || typeof userId !== 'string') {
+        res.status(400).json({
+          success: false,
+          error: 'User ID is required as query parameter'
+        });
+        return;
+      }
+
+      const result = await trackerService.getAllTrackers(userId);
 
       if (result.success) {
         res.status(200).json(result);

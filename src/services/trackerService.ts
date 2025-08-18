@@ -3,7 +3,7 @@ import logger from "../utils/logger";
 
 // Define types
 interface TrackerInput {
-  userId: number;
+  userId: string;
   trackerName: string;
   targetHours: number;
   description: string;
@@ -158,10 +158,11 @@ export default {
     }
   },
 
-  // Get all trackers
-  async getAllTrackers() {
+  // Get all trackers for a user
+  async getAllTrackers(userId: string) {
     try {
       const trackers = await prisma.tracker.findMany({
+        where: { userId },
         orderBy: {
           updatedAt: "desc",
         },

@@ -43,7 +43,7 @@ const handleUserCreation = async (userData: any) => {
     // Check if user already exists by email or authId
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [{ email }, { userId: id }],
+        OR: [{ email }, { id }],
       },
     });
 
@@ -55,7 +55,7 @@ const handleUserCreation = async (userData: any) => {
     // Create user in database with all available fields
     const newUser = await prisma.user.create({
       data: {
-        userId: id,
+        id,
         email,
         username,
         firstName: firstName || null,
@@ -89,7 +89,7 @@ const handleUserCreation = async (userData: any) => {
 
         const newUser = await prisma.user.create({
           data: {
-            userId: id,
+            id,
             email,
             username,
             firstName: firstName || null,
