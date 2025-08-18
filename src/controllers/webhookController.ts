@@ -7,6 +7,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
     // Log the complete webhook payload
     console.log("=== WEBHOOK RECEIVED ===");
+    console.log({ user: body?.user });
 
     // Handle user creation webhook from Supabase auth
     if (body?.metadata?.name === "before-user-created" && body?.user) {
