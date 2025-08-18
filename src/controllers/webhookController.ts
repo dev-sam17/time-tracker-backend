@@ -27,7 +27,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
 // Handle user creation from auth webhook
 const handleUserCreation = async (userData: any) => {
   try {
-    const { authId, email, phone, app_metadata, user_metadata } = userData;
+    const { id, email, phone, app_metadata, user_metadata } = userData;
 
     // Extract user information
     const fullName = user_metadata?.full_name || user_metadata?.name || "";
@@ -36,14 +36,14 @@ const handleUserCreation = async (userData: any) => {
 
     // Generate username from email or use auth ID
     const username =
-      email?.split("@")[0] || authId?.substring(0, 8) || `user_${Date.now()}`;
+      email?.split("@")[0] || id?.substring(0, 8) || `user_${Date.now()}`;
 
     console.log(`Creating user in database: ${email}`);
 
     // Check if user already exists by email or authId
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [{ email }, { userId: authId }],
+        OR: [{ email }, { userId: id }],
       },
     });
 
@@ -55,7 +55,7 @@ const handleUserCreation = async (userData: any) => {
     // Create user in database with all available fields
     const newUser = await prisma.user.create({
       data: {
-        userId: authId,
+        userId: id,
         email,
         username,
         firstName: firstName || null,
@@ -72,7 +72,7 @@ const handleUserCreation = async (userData: any) => {
     });
 
     console.log(
-      `User created successfully: ID=${newUser.id}, Email=${newUser.email}, AuthID=${authId}`
+      `User created successfully: ID=${newUser.id}, Email=${newUser.email}, AuthID=${id}`
     );
     console.log("========================");
   } catch (error) {
@@ -81,7 +81,7 @@ const handleUserCreation = async (userData: any) => {
     // If username already exists, try with a suffix
     if (error.code === "P2002" && error.meta?.target?.includes("username")) {
       try {
-        const { authId, email, phone, app_metadata, user_metadata } = userData;
+        const { id, email, phone, app_metadata, user_metadata } = userData;
         const fullName = user_metadata?.full_name || user_metadata?.name || "";
         const [firstName, ...lastNameParts] = fullName.split(" ");
         const lastName = lastNameParts.join(" ") || null;
@@ -89,7 +89,7 @@ const handleUserCreation = async (userData: any) => {
 
         const newUser = await prisma.user.create({
           data: {
-            userId: authId,
+            userId: id,
             email,
             username,
             firstName: firstName || null,
