@@ -1,21 +1,33 @@
 import { Request, Response } from "express";
 import prisma from "../models/prisma";
 
-export const handleWebhook = async (req: Request, res: Response) => {
+export const handleWebhook = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const body = req.body;
 
-    // Log the complete webhook payload
-    console.log("=== WEBHOOK RECEIVED ===");
-    console.log({ user: body?.user });
-
-    // Handle user creation webhook from Supabase auth
-    if (body?.metadata?.name === "before-user-created" && body?.user) {
-      await handleUserCreation(body.user);
+    // Handle user creation webhook
+    if (body) {
+      try {
+        await handleUserCreation(body);
+      } catch (error: any) {
+        console.error("Failed to process user creation:", error);
+        res.status(400).json({
+          error: "Failed to process user data",
+          message: error.message,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
     }
 
     // Send acknowledgment response
-    res.status(204).json({});
+    res.status(200).json({
+      success: true,
+      message: "User processed successfully",
+    });
   } catch (error) {
     console.error("Error processing webhook:", error);
     res.status(500).json({
@@ -28,96 +40,77 @@ export const handleWebhook = async (req: Request, res: Response) => {
 // Handle user creation from auth webhook
 const handleUserCreation = async (userData: any) => {
   try {
-    const { id, email, phone, app_metadata, user_metadata } = userData;
+    console.log("Received user data:", userData);
 
-    // Extract user information
-    const fullName = user_metadata?.full_name || user_metadata?.name || "";
-    const [firstName, ...lastNameParts] = fullName.split(" ");
-    const lastName = lastNameParts.join(" ") || null;
+    // Extract and validate required fields
+    const {
+      userId,
+      email,
+      username,
+      firstName,
+      lastName,
+      fullName,
+      avatarUrl,
+      phone,
+      provider,
+      providerId,
+      emailVerified,
+      phoneVerified,
+      isActive = true,
+      createdAt,
+      updatedAt,
+    } = userData;
 
-    // Generate username from email or use auth ID
-    const username =
-      email?.split("@")[0] || id?.substring(0, 8) || `user_${Date.now()}`;
+    if (!userId || !email || !username) {
+      throw new Error("Missing required fields: userId, email, or username");
+    }
 
-    console.log(`Creating user in database: ${email}`);
+    // Prepare user data with proper defaults
+    const userPayload = {
+      userId,
+      email,
+      username,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      fullName: fullName || null,
+      avatarUrl: avatarUrl || null,
+      phone: phone || null,
+      provider: provider || null,
+      providerId: providerId || null,
+      emailVerified: Boolean(emailVerified),
+      phoneVerified: Boolean(phoneVerified),
+      isActive: Boolean(isActive),
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    };
 
-    // Check if user already exists by email or authId
-    const existingUser = await prisma.user.findFirst({
+    const user = await prisma.user.upsert({
       where: {
-        OR: [{ email }, { id }],
+        userId: userPayload.userId,
       },
+      update: {
+        email: userPayload.email,
+        username: userPayload.username,
+        firstName: userPayload.firstName,
+        lastName: userPayload.lastName,
+        fullName: userPayload.fullName,
+        avatarUrl: userPayload.avatarUrl,
+        phone: userPayload.phone,
+        provider: userPayload.provider,
+        providerId: userPayload.providerId,
+        emailVerified: userPayload.emailVerified,
+        phoneVerified: userPayload.phoneVerified,
+        isActive: userPayload.isActive,
+        updatedAt: userPayload.updatedAt,
+      },
+      create: userPayload,
     });
 
-    if (existingUser) {
-      console.log(`User already exists: ${email}`);
-      return;
-    }
-
-    // Create user in database with all available fields
-    const newUser = await prisma.user.create({
-      data: {
-        userId: id,
-        email,
-        username,
-        firstName: firstName || null,
-        lastName,
-        fullName,
-        avatarUrl: user_metadata?.avatar_url || user_metadata?.picture || null,
-        phone: phone || null,
-        provider: app_metadata?.provider || null,
-        providerId: user_metadata?.provider_id || user_metadata?.sub || null,
-        emailVerified: user_metadata?.email_verified || false,
-        phoneVerified: user_metadata?.phone_verified || false,
-        isActive: true,
-      },
-    });
-
-    console.log(
-      `User created successfully: ID=${newUser.id}, Email=${newUser.email}, AuthID=${newUser.userId}`
-    );
-    console.log("========================");
+    console.log(`User ${user.id} processed successfully (${user.email})`);
+    return user;
   } catch (error) {
-    console.error("Error creating user from webhook:", error);
-
-    // If username already exists, try with a suffix
-    if (error.code === "P2002" && error.meta?.target?.includes("username")) {
-      try {
-        const { id, email, phone, app_metadata, user_metadata } = userData;
-        const fullName = user_metadata?.full_name || user_metadata?.name || "";
-        const [firstName, ...lastNameParts] = fullName.split(" ");
-        const lastName = lastNameParts.join(" ") || null;
-        const username = `${email?.split("@")[0]}_${Date.now()}`;
-
-        const newUser = await prisma.user.create({
-          data: {
-            userId: id,
-            email,
-            username,
-            firstName: firstName || null,
-            lastName,
-            fullName,
-            avatarUrl:
-              user_metadata?.avatar_url || user_metadata?.picture || null,
-            phone: phone || null,
-            provider: app_metadata?.provider || null,
-            providerId:
-              user_metadata?.provider_id || user_metadata?.sub || null,
-            emailVerified: user_metadata?.email_verified || false,
-            phoneVerified: user_metadata?.phone_verified || false,
-            isActive: true,
-          },
-        });
-
-        console.log(
-          `User created with unique username: ID=${newUser.id}, Email=${newUser.email}, AuthID=${newUser.userId}`
-        );
-      } catch (retryError) {
-        console.error(
-          "Failed to create user even with unique username:",
-          retryError
-        );
-      }
-    }
+    console.error("Error processing user creation:", error);
+    throw error;
   }
 };
 

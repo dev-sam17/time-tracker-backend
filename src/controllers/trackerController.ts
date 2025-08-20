@@ -1,17 +1,18 @@
-import { Request, Response, NextFunction } from 'express';
-import trackerService from '../services/trackerService';
-import logger from '../utils/logger';
+import { Request, Response, NextFunction } from "express";
+import trackerService from "../services/trackerService";
+import logger from "../utils/logger";
 
 const trackerController = {
   // Add a new tracker
   async addTracker(req: Request, res: Response) {
     try {
-      const { trackerName, targetHours, description, workDays, userId } = req.body;
+      const { trackerName, targetHours, description, workDays, userId } =
+        req.body;
 
       if (!trackerName || !targetHours || !userId) {
         res.status(400).json({
           success: false,
-          error: 'Tracker name, target hours, and user ID are required'
+          error: "Tracker name, target hours, and user ID are required",
         });
         return;
       }
@@ -20,8 +21,8 @@ const trackerController = {
         userId: userId,
         trackerName,
         targetHours: parseInt(targetHours, 10),
-        description: description || '',
-        workDays
+        description: description || "",
+        workDays,
       });
 
       if (result.success) {
@@ -32,16 +33,18 @@ const trackerController = {
         return;
       }
     } catch (err) {
-      logger.error(`Controller error adding tracker: ${(err as Error).message}`);
+      logger.error(
+        `Controller error adding tracker: ${(err as Error).message}`
+      );
     }
   },
 
   // Start a tracker
   async startTracker(req: Request, res: Response) {
     try {
-      const { trackerId } = req.body;
+      const { id: trackerId } = req.params;
       if (!trackerId) {
-        res.status(400).json({ error: 'Tracker ID is required' });
+        res.status(400).json({ error: "Tracker ID is required" });
         return;
       }
       const result = await trackerService.startTracker(trackerId);
@@ -54,24 +57,26 @@ const trackerController = {
         return;
       }
     } catch (err) {
-      logger.error(`Controller error starting tracker: ${(err as Error).message}`);
+      logger.error(
+        `Controller error starting tracker: ${(err as Error).message}`
+      );
     }
   },
 
   // Stop a tracker
   async stopTracker(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+      const { id: trackerId } = req.params;
 
-      if (!id) {
+      if (!trackerId) {
         res.status(400).json({
           success: false,
-          error: 'Tracker ID is required'
+          error: "Tracker ID is required",
         });
         return;
       }
 
-      const result = await trackerService.stopTracker(id);
+      const result = await trackerService.stopTracker(trackerId);
 
       if (result.success) {
         res.status(200).json(result);
@@ -81,7 +86,9 @@ const trackerController = {
         return;
       }
     } catch (err) {
-      logger.error(`Controller error stopping tracker: ${(err as Error).message}`);
+      logger.error(
+        `Controller error stopping tracker: ${(err as Error).message}`
+      );
     }
   },
 
@@ -93,7 +100,7 @@ const trackerController = {
       if (!id) {
         res.status(400).json({
           success: false,
-          error: 'Tracker ID is required'
+          error: "Tracker ID is required",
         });
         return;
       }
@@ -108,7 +115,9 @@ const trackerController = {
         return;
       }
     } catch (err) {
-      logger.error(`Controller error archiving tracker: ${(err as Error).message}`);
+      logger.error(
+        `Controller error archiving tracker: ${(err as Error).message}`
+      );
     }
   },
 
@@ -120,7 +129,7 @@ const trackerController = {
       if (!id) {
         res.status(400).json({
           success: false,
-          error: 'Tracker ID is required'
+          error: "Tracker ID is required",
         });
         return;
       }
@@ -135,7 +144,9 @@ const trackerController = {
         return;
       }
     } catch (err) {
-      logger.error(`Controller error deleting tracker: ${(err as Error).message}`);
+      logger.error(
+        `Controller error deleting tracker: ${(err as Error).message}`
+      );
     }
   },
 
@@ -143,10 +154,10 @@ const trackerController = {
   async getAllTrackers(req: Request, res: Response) {
     try {
       const { userId } = req.query;
-      if (!userId || typeof userId !== 'string') {
+      if (!userId || typeof userId !== "string") {
         res.status(400).json({
           success: false,
-          error: 'User ID is required as query parameter'
+          error: "User ID is required as query parameter",
         });
         return;
       }
@@ -161,7 +172,9 @@ const trackerController = {
         return;
       }
     } catch (err) {
-      logger.error(`Controller error getting trackers: ${(err as Error).message}`);
+      logger.error(
+        `Controller error getting trackers: ${(err as Error).message}`
+      );
     }
   },
 
@@ -178,7 +191,9 @@ const trackerController = {
         return;
       }
     } catch (err) {
-      logger.error(`Controller error getting active sessions: ${(err as Error).message}`);
+      logger.error(
+        `Controller error getting active sessions: ${(err as Error).message}`
+      );
     }
   },
 
@@ -190,7 +205,7 @@ const trackerController = {
       if (!id) {
         res.status(400).json({
           success: false,
-          error: 'Tracker ID is required'
+          error: "Tracker ID is required",
         });
         return;
       }
@@ -205,7 +220,9 @@ const trackerController = {
         return;
       }
     } catch (err) {
-      logger.error(`Controller error getting sessions: ${(err as Error).message}`);
+      logger.error(
+        `Controller error getting sessions: ${(err as Error).message}`
+      );
     }
   },
 
@@ -217,7 +234,7 @@ const trackerController = {
       if (!id) {
         res.status(400).json({
           success: false,
-          error: 'Tracker ID is required'
+          error: "Tracker ID is required",
         });
         return;
       }
@@ -232,7 +249,9 @@ const trackerController = {
         return;
       }
     } catch (err) {
-      logger.error(`Controller error getting work stats: ${(err as Error).message}`);
+      logger.error(
+        `Controller error getting work stats: ${(err as Error).message}`
+      );
     }
   },
 };

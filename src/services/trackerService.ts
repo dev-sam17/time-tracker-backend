@@ -23,13 +23,15 @@ export default {
           workDays: data.workDays || "1,2,3,4,5", // Use default if not provided
           user: {
             connect: {
-              id: data.userId,
+              userId: data.userId,
             },
           },
         },
       });
 
-      logger.info(`Added tracker with ID: ${tracker.id} for user: ${data.userId}`);
+      logger.info(
+        `Added tracker with ID: ${tracker.id} for user: ${data.userId}`
+      );
       return { success: true, message: "Tracker added.", data: tracker };
     } catch (err) {
       logger.error(`Error adding tracker: ${(err as Error).message}`);

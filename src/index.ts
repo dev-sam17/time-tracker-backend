@@ -3,7 +3,6 @@ import http from "http";
 import cors from "cors";
 import morgan from "morgan";
 import trackerRoutes from "./routes/trackerRoutes";
-import webhookRoutes from "./routes/webhookRoutes";
 import config from "./config/env";
 import logger from "./utils/logger";
 import { initWebsockets } from "./websockets";
@@ -28,7 +27,6 @@ app.get("/ping", (req, res) => {
 });
 
 app.use("/api", trackerRoutes);
-app.use("/webhook", webhookRoutes);
 
 app.use(
   (
