@@ -253,10 +253,11 @@ export default {
           const dateStr = getDateStr(currentDate);
           const dayOfWeek = currentDate.getDay();
 
+          const minutesWorked = dailyTotals[dateStr] || 0;
+          totalWorkHours += minutesWorked / 60;
+
           if (workDays.has(dayOfWeek)) {
             totalWorkDays++;
-            const minutesWorked = dailyTotals[dateStr] || 0;
-            totalWorkHours += minutesWorked / 60;
           }
 
           currentDate.setDate(currentDate.getDate() + 1);
