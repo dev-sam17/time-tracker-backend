@@ -282,6 +282,83 @@ const trackerController = {
       );
     }
   },
+
+  // Get daily totals for a user with custom date range
+  async getDailyTotals(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+      const { startDate, endDate } = req.query;
+
+      if (!startDate || !endDate) {
+        res.status(400).json({
+          success: false,
+          error: "startDate and endDate query parameters are required",
+        });
+        return;
+      }
+
+      const start = new Date(startDate as string);
+      const end = new Date(endDate as string);
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        res.status(400).json({
+          success: false,
+          error: "Invalid date format. Use YYYY-MM-DD",
+        });
+        return;
+      }
+
+      const result = await trackerService.getDailyTotalsForUser(
+        userId,
+        start,
+        end
+      );
+
+      if (result.success) {
+        res.status(200).json(result);
+        return;
+      } else {
+        res.status(400).json(result);
+        return;
+      }
+    } catch (err) {
+      logger.error(`Error getting daily totals: ${(err as Error).message}`);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  // Get daily totals for predefined periods (week, month, year)
+  async getDailyTotalsForPeriod(req: Request, res: Response) {
+    try {
+      const { userId, period } = req.params;
+
+      if (!["week", "month", "year"].includes(period)) {
+        res.status(400).json({
+          success: false,
+          error: "Period must be one of: week, month, year",
+        });
+        return;
+      }
+
+      const result = await trackerService.getDailyTotalsForPeriod(
+        userId,
+        period as "week" | "month" | "year"
+      );
+
+      if (result.success) {
+        res.status(200).json(result);
+        return;
+      } else {
+        res.status(400).json(result);
+        return;
+      }
+    } catch (err) {
+      logger.error(
+        `Error getting daily totals for period: ${(err as Error).message}`
+      );
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
 };
 
 export default trackerController;

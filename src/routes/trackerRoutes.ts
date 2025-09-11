@@ -19,6 +19,13 @@ router.get("/trackers/:id/stats", trackerController.getWorkStats);
 // Session routes
 router.get("/sessions/:userId/active", trackerController.getAllActiveSessions);
 
+// Daily totals routes
+router.get("/users/:userId/daily-totals", trackerController.getDailyTotals);
+router.get(
+  "/users/:userId/daily-totals/:period",
+  trackerController.getDailyTotalsForPeriod
+);
+
 router.post("/webhook", handleWebhook);
 
 export default router;
