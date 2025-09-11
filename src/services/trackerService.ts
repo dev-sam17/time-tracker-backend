@@ -347,19 +347,32 @@ export default {
   },
 
   // create function to calculate and send daily totals for a user to graph it for a week , a month or a year
-  async getDailyTotalsForUser(userId: string, startDate: Date, endDate: Date) {
+  async getDailyTotalsForUser(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+    trackerId?: string
+  ) {
     try {
+      // Build where clause conditionally based on trackerId
+      const whereClause: any = {
+        tracker: {
+          userId: userId,
+        },
+        startTime: {
+          gte: startDate,
+          lte: endDate,
+        },
+      };
+
+      // If trackerId is provided, add it to the filter
+      if (trackerId) {
+        whereClause.trackerId = trackerId;
+      }
+
       // Get all sessions for the user within the date range
       const sessions = await prisma.session.findMany({
-        where: {
-          tracker: {
-            userId: userId,
-          },
-          startTime: {
-            gte: startDate,
-            lte: endDate,
-          },
-        },
+        where: whereClause,
         include: {
           tracker: {
             select: {
@@ -447,11 +460,12 @@ export default {
   // Get daily totals for predefined periods
   async getDailyTotalsForPeriod(
     userId: string,
-    period: "week" | "month" | "year"
+    period: "week" | "month" | "year",
+    trackerId?: string
   ) {
     try {
       const { startDate, endDate } = this.getDateRange(period);
-      return await this.getDailyTotalsForUser(userId, startDate, endDate);
+      return await this.getDailyTotalsForUser(userId, startDate, endDate, trackerId);
     } catch (err) {
       logger.error(
         `Error getting daily totals for period: ${(err as Error).message}`

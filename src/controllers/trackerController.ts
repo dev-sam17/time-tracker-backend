@@ -287,7 +287,7 @@ const trackerController = {
   async getDailyTotals(req: Request, res: Response) {
     try {
       const { userId } = req.params;
-      const { startDate, endDate } = req.query;
+      const { startDate, endDate, trackerId } = req.query;
 
       if (!startDate || !endDate) {
         res.status(400).json({
@@ -311,7 +311,8 @@ const trackerController = {
       const result = await trackerService.getDailyTotalsForUser(
         userId,
         start,
-        end
+        end,
+        trackerId as string | undefined
       );
 
       if (result.success) {
@@ -331,6 +332,7 @@ const trackerController = {
   async getDailyTotalsForPeriod(req: Request, res: Response) {
     try {
       const { userId, period } = req.params;
+      const { trackerId } = req.query;
 
       if (!["week", "month", "year"].includes(period)) {
         res.status(400).json({
@@ -342,7 +344,8 @@ const trackerController = {
 
       const result = await trackerService.getDailyTotalsForPeriod(
         userId,
-        period as "week" | "month" | "year"
+        period as "week" | "month" | "year",
+        trackerId as string | undefined
       );
 
       if (result.success) {
