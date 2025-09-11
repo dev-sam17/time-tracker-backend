@@ -192,9 +192,14 @@ export default {
   },
 
   // Get all active sessions
-  async getAllActiveSessions() {
+  async getAllActiveSessions(userId: string) {
     try {
       const activeSessions = await prisma.activeSession.findMany({
+        where: {
+          tracker: {
+            userId: userId,
+          },
+        },
         include: {
           tracker: true,
         },

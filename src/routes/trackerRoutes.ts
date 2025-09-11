@@ -17,7 +17,7 @@ router.get("/trackers/:id/sessions", trackerController.getSessions);
 router.get("/trackers/:id/stats", trackerController.getWorkStats);
 
 // Session routes
-router.get("/sessions/active", trackerController.getAllActiveSessions);
+router.get("/sessions/:userId/active", trackerController.getAllActiveSessions);
 
 router.post("/webhook", handleWebhook);
 

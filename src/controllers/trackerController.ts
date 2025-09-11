@@ -210,19 +210,18 @@ const trackerController = {
   // Get all active sessions
   async getAllActiveSessions(req: Request, res: Response) {
     try {
-      const result = await trackerService.getAllActiveSessions();
+      const result = await trackerService.getAllActiveSessions(
+        req.params.userId
+      );
 
       if (result.success) {
         res.status(200).json(result);
-        return;
       } else {
         res.status(400).json(result);
-        return;
       }
     } catch (err) {
-      logger.error(
-        `Controller error getting active sessions: ${(err as Error).message}`
-      );
+      logger.error(`Error getting active sessions: ${(err as Error).message}`);
+      res.status(500).json({ error: "Internal server error" });
     }
   },
 
