@@ -318,34 +318,6 @@ export default {
     }
   },
 
-  // Helper function to get date string
-  getDateStr(date: Date): string {
-    return date.toISOString().split("T")[0];
-  },
-
-  // Helper function to get all sessions for a tracker
-  async getAllSessionsForTracker(trackerId: string) {
-    return await prisma.session.findMany({
-      where: { trackerId },
-      orderBy: { startTime: "asc" },
-    });
-  },
-
-  // create function to calculate and send daily totals for a user to graph it for a week , a month or a year
-
-  // Helper function to calculate daily totals from sessions
-  getDailyTotals(
-    sessions: any[],
-    getDateStr: (date: Date) => string
-  ): Record<string, number> {
-    const dailyTotals: Record<string, number> = {};
-    for (const session of sessions) {
-      const date = getDateStr(session.startTime);
-      dailyTotals[date] = (dailyTotals[date] || 0) + session.durationMinutes;
-    }
-    return dailyTotals;
-  },
-
   // create function to calculate and send daily totals for a user to graph it for a week , a month or a year
   async getDailyTotalsForUser(
     userId: string,
@@ -424,39 +396,6 @@ export default {
     }
   },
 
-  // Helper function to get predefined date ranges
-  getDateRange(period: "week" | "month" | "year"): {
-    startDate: Date;
-    endDate: Date;
-  } {
-    const today = new Date();
-    const endDate = new Date(today);
-    endDate.setHours(23, 59, 59, 999);
-
-    let startDate: Date;
-
-    switch (period) {
-      case "week":
-        startDate = new Date(today);
-        startDate.setDate(today.getDate() - 6); // Last 7 days
-        break;
-      case "month":
-        startDate = new Date(today);
-        startDate.setDate(today.getDate() - 29); // Last 30 days
-        break;
-      case "year":
-        startDate = new Date(today);
-        startDate.setFullYear(today.getFullYear() - 1); // Last 365 days
-        break;
-      default:
-        startDate = new Date(today);
-        startDate.setDate(today.getDate() - 6);
-    }
-
-    startDate.setHours(0, 0, 0, 0);
-    return { startDate, endDate };
-  },
-
   // Get daily totals for predefined periods
   async getDailyTotalsForPeriod(
     userId: string,
@@ -491,6 +430,7 @@ export default {
       const whereClause: any = {
         tracker: {
           userId: userId,
+          archived: false,
         },
         startTime: {
           gte: startDate,
@@ -549,15 +489,12 @@ export default {
           totalTargetHours = workDaysCount * tracker.targetHours;
         }
       } else {
-        // For all trackers, get unique trackers and calculate combined target
-        const uniqueTrackers = new Map();
-        sessions.forEach((session) => {
-          if (!uniqueTrackers.has(session.tracker.id)) {
-            uniqueTrackers.set(session.tracker.id, session.tracker);
-          }
+        // Get all active trackers for the user
+        const activeTrackers = await prisma.tracker.findMany({
+          where: { userId, archived: false },
         });
 
-        for (const [trackerId, tracker] of uniqueTrackers) {
+        for (const tracker of activeTrackers) {
           const workDays = new Set(tracker.workDays.split(",").map(Number));
           let workDaysCount = 0;
 
@@ -624,5 +561,64 @@ export default {
       );
       return { success: false, error: (err as Error).message };
     }
+  },
+
+  // Helper function to get date string
+  getDateStr(date: Date): string {
+    return date.toISOString().split("T")[0];
+  },
+
+  // Helper function to get all sessions for a tracker
+  async getAllSessionsForTracker(trackerId: string) {
+    return await prisma.session.findMany({
+      where: { trackerId },
+      orderBy: { startTime: "asc" },
+    });
+  },
+
+  // Helper function to calculate daily totals from sessions
+  getDailyTotals(
+    sessions: any[],
+    getDateStr: (date: Date) => string
+  ): Record<string, number> {
+    const dailyTotals: Record<string, number> = {};
+    for (const session of sessions) {
+      const date = getDateStr(session.startTime);
+      dailyTotals[date] = (dailyTotals[date] || 0) + session.durationMinutes;
+    }
+    return dailyTotals;
+  },
+
+  // Helper function to get predefined date ranges
+  getDateRange(period: "week" | "month" | "year"): {
+    startDate: Date;
+    endDate: Date;
+  } {
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setHours(23, 59, 59, 999);
+
+    let startDate: Date;
+
+    switch (period) {
+      case "week":
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 6); // Last 7 days
+        break;
+      case "month":
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 29); // Last 30 days
+        break;
+      case "year":
+        startDate = new Date(today);
+        startDate.setFullYear(today.getFullYear() - 1); // Last 365 days
+        break;
+      default:
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 6);
+    }
+
+    startDate.setHours(0, 0, 0, 0);
+    return { startDate, endDate };
   },
 };
