@@ -135,6 +135,21 @@ export default {
     }
   },
 
+  // Unarchive a tracker
+  async unarchiveTracker(trackerId: string) {
+    try {
+      await prisma.tracker.update({
+        where: { id: trackerId },
+        data: { archived: false },
+      });
+
+      return { success: true, message: "Tracker unarchived." };
+    } catch (err) {
+      logger.error(`Error unarchiving tracker: ${(err as Error).message}`);
+      return { success: false, error: (err as Error).message };
+    }
+  },
+
   // Delete a tracker
   async deleteTracker(trackerId: string) {
     try {

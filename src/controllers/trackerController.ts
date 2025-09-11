@@ -121,6 +121,35 @@ const trackerController = {
     }
   },
 
+  //unarchive a tracker
+  async unarchiveTracker(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          error: "Tracker ID is required",
+        });
+        return;
+      }
+
+      const result = await trackerService.unarchiveTracker(id);
+
+      if (result.success) {
+        res.status(200).json(result);
+        return;
+      } else {
+        res.status(400).json(result);
+        return;
+      }
+    } catch (err) {
+      logger.error(
+        `Controller error unarchiving tracker: ${(err as Error).message}`
+      );
+    }
+  },
+
   // Delete a tracker
   async deleteTracker(req: Request, res: Response) {
     try {
