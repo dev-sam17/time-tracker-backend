@@ -26,6 +26,13 @@ router.get(
   trackerController.getDailyTotalsForPeriod
 );
 
+// Total hours routes
+router.get("/users/:userId/total-hours", trackerController.getTotalHours);
+router.get(
+  "/users/:userId/total-hours/:period",
+  trackerController.getTotalHoursForPeriod
+);
+
 router.post("/webhook", handleWebhook);
 
 export default router;

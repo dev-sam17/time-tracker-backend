@@ -362,6 +362,86 @@ const trackerController = {
       res.status(500).json({ error: "Internal server error" });
     }
   },
+
+  // Get total hours for a user with custom date range
+  async getTotalHours(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+      const { startDate, endDate, trackerId } = req.query;
+
+      if (!startDate || !endDate) {
+        res.status(400).json({
+          success: false,
+          error: "startDate and endDate query parameters are required",
+        });
+        return;
+      }
+
+      const start = new Date(startDate as string);
+      const end = new Date(endDate as string);
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        res.status(400).json({
+          success: false,
+          error: "Invalid date format. Use YYYY-MM-DD",
+        });
+        return;
+      }
+
+      const result = await trackerService.getTotalHoursForUser(
+        userId,
+        start,
+        end,
+        trackerId as string | undefined
+      );
+
+      if (result.success) {
+        res.status(200).json(result);
+        return;
+      } else {
+        res.status(400).json(result);
+        return;
+      }
+    } catch (err) {
+      logger.error(`Error getting total hours: ${(err as Error).message}`);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  // Get total hours for predefined periods (week, month, year)
+  async getTotalHoursForPeriod(req: Request, res: Response) {
+    try {
+      const { userId, period } = req.params;
+      const { trackerId } = req.query;
+
+      if (!["week", "month", "year"].includes(period)) {
+        res.status(400).json({
+          success: false,
+          error: "Period must be one of: week, month, year",
+        });
+        return;
+      }
+
+      const result = await trackerService.getTotalHoursForPeriod(
+        userId,
+        period as "week" | "month" | "year",
+        trackerId as string | undefined
+      );
+
+      if (result.success) {
+        res.status(200).json(result);
+        return;
+      } else {
+        res.status(400).json(result);
+        return;
+      }
+    } catch (err) {
+      logger.error(
+        `Error getting total hours for period: ${(err as Error).message}`
+      );
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
 };
 
 export default trackerController;

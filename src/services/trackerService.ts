@@ -465,10 +465,162 @@ export default {
   ) {
     try {
       const { startDate, endDate } = this.getDateRange(period);
-      return await this.getDailyTotalsForUser(userId, startDate, endDate, trackerId);
+      return await this.getDailyTotalsForUser(
+        userId,
+        startDate,
+        endDate,
+        trackerId
+      );
     } catch (err) {
       logger.error(
         `Error getting daily totals for period: ${(err as Error).message}`
+      );
+      return { success: false, error: (err as Error).message };
+    }
+  },
+
+  // Get total hours worked and target hours for a user
+  async getTotalHoursForUser(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+    trackerId?: string
+  ) {
+    try {
+      // Build where clause conditionally based on trackerId
+      const whereClause: any = {
+        tracker: {
+          userId: userId,
+        },
+        startTime: {
+          gte: startDate,
+          lte: endDate,
+        },
+      };
+
+      // If trackerId is provided, add it to the filter
+      if (trackerId) {
+        whereClause.trackerId = trackerId;
+      }
+
+      // Get all sessions for the user within the date range
+      const sessions = await prisma.session.findMany({
+        where: whereClause,
+        include: {
+          tracker: {
+            select: {
+              id: true,
+              trackerName: true,
+              targetHours: true,
+              workDays: true,
+            },
+          },
+        },
+      });
+
+      // Calculate total hours worked
+      const totalMinutesWorked = sessions.reduce((total, session) => {
+        return total + session.durationMinutes;
+      }, 0);
+      const totalHoursWorked = parseFloat((totalMinutesWorked / 60).toFixed(2));
+
+      // Calculate target hours for the period
+      let totalTargetHours = 0;
+
+      if (trackerId) {
+        // For specific tracker, get its configuration
+        const tracker = await prisma.tracker.findUnique({
+          where: { id: trackerId },
+        });
+
+        if (tracker) {
+          const workDays = new Set(tracker.workDays.split(",").map(Number));
+          let workDaysCount = 0;
+
+          let currentDate = new Date(startDate);
+          while (currentDate <= endDate) {
+            const dayOfWeek = currentDate.getDay();
+            if (workDays.has(dayOfWeek)) {
+              workDaysCount++;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+
+          totalTargetHours = workDaysCount * tracker.targetHours;
+        }
+      } else {
+        // For all trackers, get unique trackers and calculate combined target
+        const uniqueTrackers = new Map();
+        sessions.forEach((session) => {
+          if (!uniqueTrackers.has(session.tracker.id)) {
+            uniqueTrackers.set(session.tracker.id, session.tracker);
+          }
+        });
+
+        for (const [trackerId, tracker] of uniqueTrackers) {
+          const workDays = new Set(tracker.workDays.split(",").map(Number));
+          let workDaysCount = 0;
+
+          let currentDate = new Date(startDate);
+          while (currentDate <= endDate) {
+            const dayOfWeek = currentDate.getDay();
+            if (workDays.has(dayOfWeek)) {
+              workDaysCount++;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+
+          totalTargetHours += workDaysCount * tracker.targetHours;
+        }
+      }
+
+      totalTargetHours = parseFloat(totalTargetHours.toFixed(2));
+
+      // Calculate difference
+      const hoursDifference = parseFloat(
+        (totalHoursWorked - totalTargetHours).toFixed(2)
+      );
+      const isAhead = hoursDifference >= 0;
+
+      const result = {
+        totalHoursWorked,
+        totalTargetHours,
+        hoursDifference: Math.abs(hoursDifference),
+        isAhead,
+        status: isAhead ? "ahead" : "behind",
+        sessionCount: sessions.length,
+        period: {
+          startDate: this.getDateStr(startDate),
+          endDate: this.getDateStr(endDate),
+        },
+      };
+
+      return { success: true, data: result };
+    } catch (err) {
+      logger.error(
+        `Error getting total hours for user: ${(err as Error).message}`
+      );
+      return { success: false, error: (err as Error).message };
+    }
+  },
+
+  // Get total hours for predefined periods
+  async getTotalHoursForPeriod(
+    userId: string,
+    period: "week" | "month" | "year",
+    trackerId?: string
+  ) {
+    try {
+      const { startDate, endDate } = this.getDateRange(period);
+      return await this.getTotalHoursForUser(
+        userId,
+        startDate,
+        endDate,
+        trackerId
+      );
+    } catch (err) {
+      logger.error(
+        `Error getting total hours for period: ${(err as Error).message}`
       );
       return { success: false, error: (err as Error).message };
     }
