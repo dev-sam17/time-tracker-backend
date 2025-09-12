@@ -641,6 +641,7 @@ export default {
         hoursTarget: number;
       }> = [];
 
+      let score = 0;
       let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
         const dateStr = this.getDateStr(currentDate);
@@ -677,7 +678,7 @@ export default {
 
         // Only calculate score for working days
         if (isWorkingDay && totalTargetHours > 0) {
-          const score = Math.round((totalHoursWorked / totalTargetHours) * 100);
+          score = Math.round((totalHoursWorked / totalTargetHours) * 100);
           result.push({
             date: dateStr,
             score: score,
@@ -685,11 +686,12 @@ export default {
             hoursTarget: parseFloat(totalTargetHours.toFixed(2)),
           });
         } else if (!isWorkingDay) {
-          let score = 0;
-          score =
-            totalHoursWorked > 0
-              ? Math.round((totalHoursWorked / totalTargetHours) * 100) + 100
-              : 100;
+          if (score !== 0) {
+            score =
+              totalHoursWorked > 0
+                ? Math.round((totalHoursWorked / totalTargetHours) * 100) + 100
+                : 100;
+          }
           result.push({
             date: dateStr,
             score: score,
