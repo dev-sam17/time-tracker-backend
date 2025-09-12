@@ -563,6 +563,171 @@ export default {
     }
   },
 
+  // Productivity Trend
+  async getProductivityTrendForUser(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+    trackerId?: string
+  ) {
+    try {
+      // Build where clause conditionally based on trackerId
+      const whereClause: any = {
+        tracker: {
+          userId: userId,
+          archived: false,
+        },
+        startTime: {
+          gte: startDate,
+          lte: endDate,
+        },
+      };
+
+      // If trackerId is provided, add it to the filter
+      if (trackerId) {
+        whereClause.trackerId = trackerId;
+      }
+
+      // Get all sessions for the user within the date range
+      const sessions = await prisma.session.findMany({
+        where: whereClause,
+        include: {
+          tracker: {
+            select: {
+              id: true,
+              trackerName: true,
+              targetHours: true,
+              workDays: true,
+            },
+          },
+        },
+        orderBy: {
+          startTime: "asc",
+        },
+      });
+
+      // Calculate daily totals using helper function
+      const dailyTotals = this.getDailyTotals(sessions, this.getDateStr);
+
+      // Get tracker configurations
+      let trackerConfigs: Map<string, any> = new Map();
+
+      if (trackerId) {
+        // For specific tracker
+        const tracker = await prisma.tracker.findUnique({
+          where: { id: trackerId },
+        });
+        if (tracker) {
+          trackerConfigs.set(tracker.id, tracker);
+        }
+      } else {
+        // For all trackers, get unique trackers from sessions
+        const trackers = await prisma.tracker.findMany({
+          where: {
+            userId: userId,
+            archived: false,
+          },
+        });
+        trackers.forEach((tracker) => {
+          trackerConfigs.set(tracker.id, tracker);
+        });
+      }
+
+      // Calculate productivity scores for each day
+      const result: Array<{
+        date: string;
+        score: number;
+        hoursWorked: number;
+        hoursTarget: number;
+      }> = [];
+
+      let currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        const dateStr = this.getDateStr(currentDate);
+        const dayOfWeek = currentDate.getDay();
+
+        let totalHoursWorked = 0;
+        let totalTargetHours = 0;
+        let isWorkingDay = false;
+
+        if (trackerId) {
+          // For specific tracker
+          const tracker = trackerConfigs.get(trackerId);
+          if (tracker) {
+            const workDays = new Set(tracker.workDays.split(",").map(Number));
+            if (workDays.has(dayOfWeek)) {
+              isWorkingDay = true;
+              totalTargetHours = tracker.targetHours;
+              totalHoursWorked = (dailyTotals[dateStr] || 0) / 60; // Convert minutes to hours
+            }
+          }
+        } else {
+          // For all trackers
+          for (const [trackerId, tracker] of trackerConfigs) {
+            const workDays = new Set(tracker.workDays.split(",").map(Number));
+            if (workDays.has(dayOfWeek)) {
+              isWorkingDay = true;
+              totalTargetHours += tracker.targetHours;
+            }
+          }
+          if (isWorkingDay) {
+            totalHoursWorked = (dailyTotals[dateStr] || 0) / 60; // Convert minutes to hours
+          }
+        }
+
+        // Only calculate score for working days
+        if (isWorkingDay && totalTargetHours > 0) {
+          const score = Math.round((totalHoursWorked / totalTargetHours) * 100);
+          result.push({
+            date: dateStr,
+            score: score,
+            hoursWorked: totalHoursWorked,
+            hoursTarget: totalTargetHours,
+          });
+        } else if (!isWorkingDay) {
+          const score = Math.round((totalHoursWorked / totalTargetHours) * 100) + 100;
+          result.push({
+            date: dateStr,
+            score: score,
+            hoursWorked: totalHoursWorked,
+            hoursTarget: totalTargetHours,
+          });
+        }
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      return { success: true, data: result };
+    } catch (err) {
+      logger.error(
+        `Error getting productivity trend for user: ${(err as Error).message}`
+      );
+      return { success: false, error: (err as Error).message };
+    }
+  },
+
+  // Get productivity trend for predefined periods
+  async getProductivityTrendForPeriod(
+    userId: string,
+    period: "week" | "month" | "year",
+    trackerId?: string
+  ) {
+    try {
+      const { startDate, endDate } = this.getDateRange(period);
+      return await this.getProductivityTrendForUser(
+        userId,
+        startDate,
+        endDate,
+        trackerId
+      );
+    } catch (err) {
+      logger.error(
+        `Error getting productivity trend for period: ${(err as Error).message}`
+      );
+      return { success: false, error: (err as Error).message };
+    }
+  },
+
   // Helper function to get date string
   getDateStr(date: Date): string {
     return date.toISOString().split("T")[0];

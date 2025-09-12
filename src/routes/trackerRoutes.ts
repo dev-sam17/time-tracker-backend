@@ -33,6 +33,16 @@ router.get(
   trackerController.getTotalHoursForPeriod
 );
 
+// Productivity trend routes
+router.get(
+  "/users/:userId/productivity-trend",
+  trackerController.getProductivityTrend
+);
+router.get(
+  "/users/:userId/productivity-trend/:period",
+  trackerController.getProductivityTrendForPeriod
+);
+
 router.post("/webhook", handleWebhook);
 
 export default router;
