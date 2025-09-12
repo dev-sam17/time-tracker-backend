@@ -685,7 +685,11 @@ export default {
             hoursTarget: totalTargetHours,
           });
         } else if (!isWorkingDay) {
-          const score = Math.round((totalHoursWorked / totalTargetHours) * 100) + 100;
+          let score = 0;
+          score =
+            totalHoursWorked > 0
+              ? Math.round((totalHoursWorked / totalTargetHours) * 100) + 100
+              : 100;
           result.push({
             date: dateStr,
             score: score,
