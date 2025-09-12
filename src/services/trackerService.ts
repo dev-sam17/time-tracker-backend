@@ -681,8 +681,8 @@ export default {
           result.push({
             date: dateStr,
             score: score,
-            hoursWorked: totalHoursWorked,
-            hoursTarget: totalTargetHours,
+            hoursWorked: parseFloat(totalHoursWorked.toFixed(2)),
+            hoursTarget: parseFloat(totalTargetHours.toFixed(2)),
           });
         } else if (!isWorkingDay) {
           let score = 0;
@@ -693,8 +693,8 @@ export default {
           result.push({
             date: dateStr,
             score: score,
-            hoursWorked: totalHoursWorked,
-            hoursTarget: totalTargetHours,
+            hoursWorked: parseFloat(totalHoursWorked.toFixed(2)),
+            hoursTarget: parseFloat(totalTargetHours.toFixed(2)),
           });
         }
 
